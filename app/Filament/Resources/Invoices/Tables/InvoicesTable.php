@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Invoices\Tables;
 
+use App\InvoiceStatus;
+use App\Models\Invoice;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -43,7 +45,10 @@ class InvoicesTable
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->visible(
+                    fn(Invoice $record): bool =>
+                    $record->status !== InvoiceStatus::Approved
+                ),
             ])
             ->toolbarActions([]);
     }

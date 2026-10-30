@@ -6,6 +6,7 @@ use App\Filament\Resources\Invoices\InvoiceResource;
 use App\InvoiceStatus;
 use App\Models\Invoice;
 use App\Services\InvoiceValidator;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
@@ -20,8 +21,57 @@ class EditInvoice extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            // ViewAction::make(),
-            // DeleteAction::make(),
+            Action::make('approve')
+                ->label('Approve invoice')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Approve invoice?')
+                ->modalDescription(
+                    'Save your corrections before approving. ' .
+                        'The saved invoice will be validated again.'
+                )
+                ->visible(
+                    fn(): bool =>
+                    $this->getRecord()->status !== InvoiceStatus::Approved
+                )
+                ->action(function (): void {
+                    $record = $this->getRecord()->fresh();
+
+                    // Never approve the same invoice twice.
+                    if ($record->status === InvoiceStatus::Approved) {
+                        return;
+                    }
+
+                    // Reuse our existing validation and duplicate checks.
+                    $record = $this->handleRecordUpdate($record, [
+                        'current_data' => $record->current_data,
+                    ]);
+
+                    if ($record->status !== InvoiceStatus::ReadyForReview) {
+                        Notification::make()
+                            ->title('Invoice cannot be approved')
+                            ->body(implode(' ', $record->validation_errors ?? []))
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    // Explicit manual approval.
+                    $record->update([
+                        'status' => InvoiceStatus::Approved,
+                    ]);
+
+                    Notification::make()
+                        ->title('Invoice approved')
+                        ->success()
+                        ->send();
+
+                    $this->redirect(
+                        InvoiceResource::getUrl('index')
+                    );
+                }),
         ];
     }
 
@@ -29,6 +79,12 @@ class EditInvoice extends EditRecord
         Model $record,
         array $data
     ): Model {
+        abort_if(
+            $record->fresh()->status === InvoiceStatus::Approved,
+            403,
+            'Approved invoices cannot be modified.'
+        );
+
         $invoiceData = $data['current_data'];
 
         $warnings = app(InvoiceValidator::class)

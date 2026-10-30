@@ -46,15 +46,34 @@ class InvoiceController extends Controller
             // Validate indepentenly
             $warnings = $validator->validate($invoice);
 
-            $status = empty($warnings) ? 'READY_FOR_REVIEW' : 'NEEDS_ATTENTION';
-
             // Normalize supplier name
-            $supplierName = $invoice['supplier_name'];
+            $supplierName = $invoice['supplier_name'] ?? null;
+            $invoiceNumber = $invoice['invoice_number'] ?? null;
 
             $normalizedSupplier = $supplierName !== null
                 && trim($supplierName) !== ''
                 ? Str::lower(Str::squish($supplierName))
                 : null;
+
+            // Check if this invoice already exists.
+            if (
+                $normalizedSupplier !== null &&
+                is_string($invoiceNumber) &&
+                trim($invoiceNumber) !== ''
+            ) {
+                $duplicateExists = Invoice::query()
+                    ->where('supplier_name_normalized', $normalizedSupplier)
+                    ->where('invoice_number', $invoiceNumber)
+                    ->exists();
+
+                if ($duplicateExists) {
+                    $warnings[] = 'Possible duplicate invoice.';
+                }
+
+                $status = empty($warnings)
+                    ? 'READY_FOR_REVIEW'
+                    : 'NEEDS_ATTENTION';
+            }
 
             // Persist extraction and validation results.
             $savedInvoice = Invoice::create([

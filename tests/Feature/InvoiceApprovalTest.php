@@ -42,9 +42,22 @@ final class InvoiceApprovalTest extends TestCase
             'processing_time_ms' => 100,
         ]);
 
+        // Invalid invoices should not show the approve action.
         Livewire::test(EditInvoice::class, [
             'record' => $invoice->getRouteKey(),
         ])
+            ->assertActionHidden('approve');
+
+        // Simulate an outdated or incorrect stored status.
+        $invoice->update([
+            'status' => InvoiceStatus::ReadyForReview,
+        ]);
+
+        // Approval must still revalidate the actual invoice data.
+        Livewire::test(EditInvoice::class, [
+            'record' => $invoice->getRouteKey(),
+        ])
+            ->assertActionVisible('approve')
             ->callAction('approve')
             ->assertNotified('Invoice cannot be approved');
 

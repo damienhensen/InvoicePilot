@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\InvoiceStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
@@ -24,6 +25,7 @@ class Invoice extends Model
             'current_data' => 'array',
             'validation_errors' => 'array',
             'processing_time_ms' => 'integer',
+            'status' => InvoiceStatus::class,
         ];
     }
 }

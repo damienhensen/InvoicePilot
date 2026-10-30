@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Invoices\Pages;
 
 use App\Filament\Resources\Invoices\InvoiceResource;
+use App\InvoiceStatus;
 use App\Services\InvoiceProcessor;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -61,7 +62,7 @@ class ListInvoices extends ListRecords
                             ->process($path);
 
 
-                        $needsAttention = $invoice->status === 'NEEDS_ATTENTION';
+                        $needsAttention = $invoice->status === InvoiceStatus::NeedsAttention;
 
                         Notification::make()
                             ->title($needsAttention

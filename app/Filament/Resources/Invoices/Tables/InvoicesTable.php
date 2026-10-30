@@ -30,13 +30,7 @@ class InvoicesTable
                     ->prefix('€ '),
 
                 TextColumn::make('status')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'READY_FOR_REVIEW' => 'info',
-                        'NEEDS_ATTENTION' => 'warning',
-                        'APPROVED' => 'success',
-                        default => 'gray',
-                    }),
+                    ->badge(),
 
                 TextColumn::make('processing_time_ms')
                     ->label('AI time')

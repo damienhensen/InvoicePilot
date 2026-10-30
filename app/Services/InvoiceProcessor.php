@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\InvoiceStatus;
 use App\Models\Invoice;
 use Illuminate\Support\Str;
 
@@ -55,8 +56,8 @@ final class InvoiceProcessor
         }
 
         $status = empty($warnings)
-            ? 'READY_FOR_REVIEW'
-            : 'NEEDS_ATTENTION';
+            ? InvoiceStatus::ReadyForReview
+            : InvoiceStatus::NeedsAttention;
 
         // Persist extraction and validation results.
         return Invoice::create([

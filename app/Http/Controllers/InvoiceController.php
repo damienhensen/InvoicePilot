@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Invoice;
 use App\Services\AiInvoiceExtractor;
 use App\Services\InvoiceValidator;
 use App\Services\PdfTextExtractor;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class InvoiceController extends Controller
@@ -31,15 +33,46 @@ class InvoiceController extends Controller
 
         try {
             $text = $extractor->extract($request->file('invoice')->getPathname());
+
+            $startedAt = hrtime(true);
+
+            // Extract invoice data
             $invoice = $aiExtractor->extract($text);
+
+            $processingTimeMs = (int) round(
+                (hrtime(true) - $startedAt) / 1_000_000
+            );
+
+            // Validate indepentenly
             $warnings = $validator->validate($invoice);
 
             $status = empty($warnings) ? 'READY_FOR_REVIEW' : 'NEEDS_ATTENTION';
 
+            // Normalize supplier name
+            $supplierName = $invoice['supplier_name'];
+
+            $normalizedSupplier = $supplierName !== null
+                && trim($supplierName) !== ''
+                ? Str::lower(Str::squish($supplierName))
+                : null;
+
+            // Persist extraction and validation results.
+            $savedInvoice = Invoice::create([
+                'supplier_name_normalized' => $normalizedSupplier,
+                'invoice_number' => $invoice['invoice_number'],
+                'original_ai_data' => $invoice,
+                'current_data' => $invoice,
+                'validation_errors' => $warnings,
+                'status' => $status,
+                'model_name' => 'qwen3:4b-instruct',
+                'processing_time_ms' => $processingTimeMs,
+            ]);
+
             return view('invoices.upload', compact(
                 'invoice',
                 'warnings',
-                'status'
+                'status',
+                'savedInvoice'
             ));
         } catch (ConnectionException | RequestException $e) {
             report($e);

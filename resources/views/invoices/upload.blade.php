@@ -81,6 +81,12 @@
             <p>All automatic checks passed.</p>
         @endif
     @endisset
+
+    @isset($savedInvoice)
+        <p>
+            Saved as invoice #{{ $savedInvoice->id }}
+        </p>
+    @endisset
 </body>
 
 </html>

@@ -55,6 +55,32 @@
         <h2>Extracted text</h2>
         <pre>{{ $text }}</pre>
     @endisset
+
+    @isset($invoice)
+        <h2>Extracted invoice</h2>
+
+        <p>Status: <strong>{{ $status }}</strong></p>
+
+        <table>
+            @foreach ($invoice as $field => $value)
+                <tr>
+                    <th>{{ $field }}</th>
+                    <td>{{ $value ?? '—' }}</td>
+                </tr>
+            @endforeach
+        </table>
+
+        @if (!empty($warnings))
+            <h3>Validation warnings</h3>
+            <ul>
+                @foreach ($warnings as $warning)
+                    <li>{{ $warning }}</li>
+                @endforeach
+            </ul>
+        @else
+            <p>All automatic checks passed.</p>
+        @endif
+    @endisset
 </body>
 
 </html>

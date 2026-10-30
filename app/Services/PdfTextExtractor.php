@@ -44,7 +44,7 @@ final class PdfTextExtractor
         }
 
         if ($text === '') {
-            throw new RuntimeException("PDF is empty: $path");
+            throw new RuntimeException("PDF is invalid");
         }
 
         return $text;

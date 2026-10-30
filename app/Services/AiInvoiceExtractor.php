@@ -43,7 +43,7 @@ final class AiInvoiceExtractor
         $response = Http::connectTimeout(5)
             ->timeout(120)
             ->post('http://127.0.0.1:11434/api/chat', [
-                'model' => 'qwen3:4b-instruct',
+                'model' => config('services.ollama.model'),
                 'stream' => false,
                 'options' => [
                     'temperature' => 0,

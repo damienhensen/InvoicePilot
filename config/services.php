@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'ollama' => [
+        'model' => env('OLLAMA_MODEL', 'qwen3:4b-instruct'),
+    ],
+
 ];

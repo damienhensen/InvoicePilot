@@ -2,23 +2,19 @@
 
 A small Laravel application that uses a local LLM to extract and review PDF invoices.
 
-InvoicePilot takes a PDF invoice, extracts its text, and sends it to Qwen3 through Ollama to identify fields like the supplier, invoice number, dates, and amounts. The extracted data is then checked against a set of validation rules before being presented for manual review.
+InvoicePilot takes a PDF invoice, extracts its text, and sends it to Ollama to identify fields like the supplier, invoice number, dates, and amounts. The extracted data is then checked against a set of validation rules before being presented for manual review.
 
-The goal of this project was to explore what it takes to integrate an LLM into an actual application, beyond simply sending prompts and displaying responses.
+The project started as an experiment in integrating an LLM into a Laravel application, with a focus on structured output, validation, and handling unreliable model responses.
 
 ## Screenshots
 
 ### Invoice overview
 
-<img src="docs/screenshots/invoice-overview.png"
-     alt="Invoice overview"
-     width="750">
+<img src="docs/screenshots/invoice-overview.png" alt="Invoice overview" width="750">
 
 ### Invoice review
 
-<img src="docs/screenshots/invoice-review.png"
-     alt="Invoice review"
-     width="750">
+<img src="docs/screenshots/invoice-review.png" alt="Invoice review" width="750">
 
 ## Features
 
@@ -28,6 +24,7 @@ The goal of this project was to explore what it takes to integrate an LLM into a
 - Duplicate invoice detection
 - Manual corrections and approval through Filament
 - Original AI output preserved alongside corrected values
+- Configurable Ollama model
 - Automated tests and a small evaluation dataset
 
 ## Tech stack
@@ -35,7 +32,7 @@ The goal of this project was to explore what it takes to integrate an LLM into a
 - PHP 8.5 / Laravel 13
 - Filament 5
 - SQLite
-- Ollama with `qwen3:4b-instruct`
+- Ollama (Qwen3 4B Instruct by default)
 - [smalot/pdfparser](https://github.com/smalot/pdfparser)
 - PHPUnit
 
@@ -49,11 +46,11 @@ The result goes through regular PHP validation to check things like missing fiel
 
 Invoices are then assigned one of three statuses:
 
-| Status | Description |
-|---|---|
-| `READY_FOR_REVIEW` | All automatic checks passed |
-| `NEEDS_ATTENTION` | One or more checks failed |
-| `APPROVED` | Manually reviewed and approved |
+| Status             | Description                    |
+| ------------------ | ------------------------------ |
+| `READY_FOR_REVIEW` | All automatic checks passed    |
+| `NEEDS_ATTENTION`  | One or more checks failed      |
+| `APPROVED`         | Manually reviewed and approved |
 
 Users can correct extracted values and run validation again. The original model output is kept separately so corrections don't overwrite what the model initially returned.
 
@@ -75,7 +72,7 @@ The project was developed with PHP 8.5, Laravel 13, and an NVIDIA RTX 2060 (6 GB
 Clone the repository and install dependencies:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/damienhensen/InvoicePilot.git
 cd InvoicePilot
 
 composer install
@@ -96,18 +93,41 @@ touch database/database.sqlite
 php artisan migrate
 ```
 
-Install Ollama and pull the model:
+### Ollama configuration
+
+Install [Ollama](https://ollama.com/) and download the default model:
 
 ```bash
 ollama pull qwen3:4b-instruct
 ```
 
-Make sure Ollama is running on `http://localhost:11434`.
+Make sure Ollama is running on `http://127.0.0.1:11434`.
 
-Create a Filament user and start the application:
+The model is configured through `.env`:
+
+```env
+OLLAMA_MODEL=qwen3:4b-instruct
+```
+
+You can switch to another locally installed Ollama model by changing `OLLAMA_MODEL`. The selected model needs to support structured JSON output.
+
+No PHP changes are needed when switching models. If Laravel's configuration is cached, run:
+
+```bash
+php artisan config:clear
+```
+
+### Start the application
+
+Create a Filament user:
 
 ```bash
 php artisan make:filament-user
+```
+
+Start Laravel:
+
+```bash
 php artisan serve
 ```
 
@@ -121,28 +141,28 @@ Run the test suite with:
 php artisan test
 ```
 
-The latest recorded run passed 40 tests with 125 assertions.
-
-Tests cover PDF processing, invoice validation, mocked Ollama responses, duplicate detection, manual corrections, and approval rules.
+The project includes 40 automated tests covering PDF processing, invoice validation, mocked Ollama responses, duplicate detection, manual corrections, and approval rules.
 
 Ollama doesn't need to be running for the automated tests.
 
 ## LLM evaluation
 
-I also put together a small evaluation set of 12 synthetic invoices covering different layouts, missing information, inconsistent amounts, and a prompt-injection attempt.
+I also put together a small evaluation set of 12 synthetic invoice cases covering different layouts, missing information, inconsistent amounts, and a prompt-injection attempt.
 
 The first run revealed an interesting issue: Qwen occasionally changed invoice numbers during extraction. For example, `HC-2026-500` was consistently returned as `HC-2026-50`, even though the PDF text had been extracted correctly.
 
 After updating the prompt to explicitly preserve identifiers character-for-character, I ran the evaluation again.
 
-| Metric | Initial prompt | Updated prompt |
-|---|---:|---:|
-| Correct fields | 83/84 | 84/84 |
-| Fully correct invoices | 11/12 | 12/12 |
-| Field validation agreement | 12/12 | 12/12 |
-| Average processing time | 1.49s | 1.51s |
+| Metric                     | Initial prompt | Updated prompt |
+| -------------------------- | -------------: | -------------: |
+| Correct fields             |          83/84 |          84/84 |
+| Fully correct invoices     |          11/12 |          12/12 |
+| Field validation agreement |          12/12 |          12/12 |
+| Average processing time    |          1.49s |          1.51s |
 
-These results are limited to the evaluation dataset. The prompt was improved using errors found in that same dataset, so the final score shouldn't be interpreted as accuracy on unseen invoices.
+These results were measured using `qwen3:4b-instruct` on the local evaluation dataset. They don't necessarily apply to other Ollama models.
+
+The prompt was improved using errors found in that same dataset, so the final score shouldn't be interpreted as accuracy on unseen invoices.
 
 Database-dependent duplicate detection is tested separately.
 

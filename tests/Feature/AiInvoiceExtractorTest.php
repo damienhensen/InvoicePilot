@@ -20,18 +20,28 @@ final class AiInvoiceExtractorTest extends TestCase
 
     public function test_extracts_valid_structured_data_from_mocked_ollama(): void
     {
-        $expected = InvoiceTestData::valid();
-        Http::fake(['*' => InvoiceTestData::ollamaResponse($expected)]);
+        // Use a different model to verify the configuration is respected.
+        config()->set('services.ollama.model', 'test-model:latest');
 
-        $actual = app(AiInvoiceExtractor::class)->extract('Fictieve factuurtekst');
+        $expected = InvoiceTestData::valid();
+
+        Http::fake([
+            '*' => InvoiceTestData::ollamaResponse($expected),
+        ]);
+
+        $actual = app(AiInvoiceExtractor::class)
+            ->extract('Fictieve factuurtekst');
 
         $this->assertSame($expected, $actual);
+
         Http::assertSentCount(1);
-        Http::assertSent(fn ($request) =>
+
+        Http::assertSent(
+            fn($request) =>
             $request->url() === 'http://127.0.0.1:11434/api/chat'
-            && $request['model'] === 'qwen3:4b-instruct'
-            && $request['stream'] === false
-            && ($request['format']['additionalProperties'] ?? null) === false
+                && $request['model'] === 'test-model:latest'
+                && $request['stream'] === false
+                && ($request['format']['additionalProperties'] ?? null) === false
         );
     }
 

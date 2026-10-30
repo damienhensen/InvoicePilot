@@ -67,7 +67,7 @@ final class InvoiceProcessor
             'current_data' => $invoice,
             'validation_errors' => $warnings,
             'status' => $status,
-            'model_name' => 'qwen3:4b-instruct',
+            'model_name' => config('services.ollama.model'),
             'processing_time_ms' => $processingTimeMs,
         ]);
     }

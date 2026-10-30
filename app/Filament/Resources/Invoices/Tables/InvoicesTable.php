@@ -42,7 +42,9 @@ class InvoicesTable
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->recordActions([])
+            ->recordActions([
+                EditAction::make(),
+            ])
             ->toolbarActions([]);
     }
 }

@@ -34,6 +34,7 @@ class EditInvoice extends EditRecord
                 ->visible(
                     fn(): bool =>
                     $this->getRecord()->status !== InvoiceStatus::Approved
+                        && $this->getRecord()->status === InvoiceStatus::ReadyForReview
                 )
                 ->action(function (): void {
                     $record = $this->getRecord()->fresh();

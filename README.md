@@ -1,58 +1,169 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# InvoicePilot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A small Laravel application that uses a local LLM to extract and review PDF invoices.
 
-## About Laravel
+InvoicePilot takes a PDF invoice, extracts its text, and sends it to Qwen3 through Ollama to identify fields like the supplier, invoice number, dates, and amounts. The extracted data is then checked against a set of validation rules before being presented for manual review.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The goal of this project was to explore what it takes to integrate an LLM into an actual application, beyond simply sending prompts and displaying responses.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Screenshots
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Invoice overview
 
-## Learning Laravel
+<img src="docs/screenshots/invoice-overview.png"
+     alt="Invoice overview"
+     width="750">
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Invoice review
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<img src="docs/screenshots/invoice-review.png"
+     alt="Invoice review"
+     width="750">
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Features
 
-## Agentic Development
+- PDF upload and text extraction
+- Structured invoice extraction using Ollama and JSON Schema
+- Validation of required fields, dates, amounts, and currency
+- Duplicate invoice detection
+- Manual corrections and approval through Filament
+- Original AI output preserved alongside corrected values
+- Automated tests and a small evaluation dataset
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Tech stack
+
+- PHP 8.5 / Laravel 13
+- Filament 5
+- SQLite
+- Ollama with `qwen3:4b-instruct`
+- [smalot/pdfparser](https://github.com/smalot/pdfparser)
+- PHPUnit
+
+Everything runs locally. No external AI API or cloud infrastructure is required.
+
+## How it works
+
+When an invoice is uploaded, the application extracts the text from the PDF and passes it to Ollama. The model returns seven fields in a predefined JSON structure.
+
+The result goes through regular PHP validation to check things like missing fields, invalid dates, amount mismatches, unsupported currencies, and duplicate invoices.
+
+Invoices are then assigned one of three statuses:
+
+| Status | Description |
+|---|---|
+| `READY_FOR_REVIEW` | All automatic checks passed |
+| `NEEDS_ATTENTION` | One or more checks failed |
+| `APPROVED` | Manually reviewed and approved |
+
+Users can correct extracted values and run validation again. The original model output is kept separately so corrections don't overwrite what the model initially returned.
+
+An invoice can only be approved manually, after all validation checks pass.
+
+## Getting started
+
+### Requirements
+
+- PHP 8.3+ with the required Laravel extensions
+- Composer
+- SQLite
+- Ollama
+
+The project was developed with PHP 8.5, Laravel 13, and an NVIDIA RTX 2060 (6 GB).
+
+### Installation
+
+Clone the repository and install dependencies:
 
 ```bash
-composer require laravel/boost --dev
+git clone <repository-url>
+cd InvoicePilot
 
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Configure SQLite in `.env`:
 
-## Contributing
+```env
+DB_CONNECTION=sqlite
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Create the database file if it doesn't exist, then run the migrations:
 
-## Code of Conduct
+```bash
+touch database/database.sqlite
+php artisan migrate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Install Ollama and pull the model:
 
-## Security Vulnerabilities
+```bash
+ollama pull qwen3:4b-instruct
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Make sure Ollama is running on `http://localhost:11434`.
 
-## License
+Create a Filament user and start the application:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan make:filament-user
+php artisan serve
+```
+
+The admin panel is available at `http://localhost:8000/admin`.
+
+## Testing
+
+Run the test suite with:
+
+```bash
+php artisan test
+```
+
+The latest recorded run passed 40 tests with 125 assertions.
+
+Tests cover PDF processing, invoice validation, mocked Ollama responses, duplicate detection, manual corrections, and approval rules.
+
+Ollama doesn't need to be running for the automated tests.
+
+## LLM evaluation
+
+I also put together a small evaluation set of 12 synthetic invoices covering different layouts, missing information, inconsistent amounts, and a prompt-injection attempt.
+
+The first run revealed an interesting issue: Qwen occasionally changed invoice numbers during extraction. For example, `HC-2026-500` was consistently returned as `HC-2026-50`, even though the PDF text had been extracted correctly.
+
+After updating the prompt to explicitly preserve identifiers character-for-character, I ran the evaluation again.
+
+| Metric | Initial prompt | Updated prompt |
+|---|---:|---:|
+| Correct fields | 83/84 | 84/84 |
+| Fully correct invoices | 11/12 | 12/12 |
+| Field validation agreement | 12/12 | 12/12 |
+| Average processing time | 1.49s | 1.51s |
+
+These results are limited to the evaluation dataset. The prompt was improved using errors found in that same dataset, so the final score shouldn't be interpreted as accuracy on unseen invoices.
+
+Database-dependent duplicate detection is tested separately.
+
+The evaluation cases, ground-truth data, and details about the prompt changes are available in [evaluation/README.md](evaluation/README.md).
+
+## Limitations
+
+This is a portfolio project, not production-ready accounting software.
+
+A few things are intentionally out of scope:
+
+- Scanned PDFs and OCR
+- PDFs larger than 3 MB or longer than 3 pages
+- Payments or accounting integrations
+- Automatic invoice approval
+- Cloud deployment
+
+The application treats PDF content as untrusted input and doesn't give the model access to application actions. However, the included prompt-injection test doesn't guarantee protection against every possible attack.
+
+The evaluation uses fictional invoices only. No real financial documents are needed.
+
+## Development
+
+This project was built with AI-assisted development. AI was used to help write and iterate on implementation code and tests, while the integration, validation behavior, and evaluation results were tested and reviewed locally.

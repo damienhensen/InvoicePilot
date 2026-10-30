@@ -1,0 +1,182 @@
+{
+  "cases": [
+    {
+      "id": "normal-01",
+      "pdf": "fixtures/normal-01.pdf",
+      "expected": {
+        "supplier_name": "ZaanTech Diensten B.V.",
+        "invoice_number": "ZTD-2026-041",
+        "invoice_date": "2026-10-23",
+        "subtotal_ex_vat": "200.00",
+        "vat_amount": "42.00",
+        "total_in_vat": "242.00",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "normal-02",
+      "pdf": "fixtures/normal-02.pdf",
+      "expected": {
+        "supplier_name": "Noordzee IT Services B.V.",
+        "invoice_number": "NZ-2026-002",
+        "invoice_date": "2026-09-14",
+        "subtotal_ex_vat": "1250.00",
+        "vat_amount": "262.50",
+        "total_in_vat": "1512.50",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "normal-03",
+      "pdf": "fixtures/normal-03.pdf",
+      "expected": {
+        "supplier_name": "Noorderlicht Design Studio",
+        "invoice_number": "ND-2026-118",
+        "invoice_date": "2026-08-05",
+        "subtotal_ex_vat": "80.00",
+        "vat_amount": "16.80",
+        "total_in_vat": "96.80",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "normal-04",
+      "pdf": "fixtures/normal-04.pdf",
+      "expected": {
+        "supplier_name": "FietsWerkplaats De Kade",
+        "invoice_number": "FK-071",
+        "invoice_date": "2026-07-01",
+        "subtotal_ex_vat": "365.50",
+        "vat_amount": "76.76",
+        "total_in_vat": "442.26",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "normal-05",
+      "pdf": "fixtures/normal-05.pdf",
+      "expected": {
+        "supplier_name": "Harborline Cloud B.V.",
+        "invoice_number": "HC-2026-500",
+        "invoice_date": "2026-06-21",
+        "subtotal_ex_vat": "99.99",
+        "vat_amount": "21.00",
+        "total_in_vat": "120.99",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "normal-06",
+      "pdf": "fixtures/normal-06.pdf",
+      "expected": {
+        "supplier_name": "Atelier Rivier & Co.",
+        "invoice_number": "AR-26-0303",
+        "invoice_date": "2026-03-03",
+        "subtotal_ex_vat": "375.00",
+        "vat_amount": "78.75",
+        "total_in_vat": "453.75",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "missing-01",
+      "pdf": "fixtures/missing-01.pdf",
+      "expected": {
+        "supplier_name": "Groenveld Facilitaire Diensten",
+        "invoice_number": null,
+        "invoice_date": "2026-04-07",
+        "subtotal_ex_vat": "410.00",
+        "vat_amount": "86.10",
+        "total_in_vat": "496.10",
+        "currency": "EUR"
+      },
+      "expected_warnings": [
+        "Invoice number is missing."
+      ]
+    },
+    {
+      "id": "missing-02",
+      "pdf": "fixtures/missing-02.pdf",
+      "expected": {
+        "supplier_name": "Hout & Kabel Onderhoud",
+        "invoice_number": "HK-2026-024",
+        "invoice_date": null,
+        "subtotal_ex_vat": "600.00",
+        "vat_amount": "126.00",
+        "total_in_vat": "726.00",
+        "currency": "EUR"
+      },
+      "expected_warnings": [
+        "Invoice date is missing."
+      ]
+    },
+    {
+      "id": "inconsistent-01",
+      "pdf": "fixtures/inconsistent-01.pdf",
+      "expected": {
+        "supplier_name": "Delta Printshop",
+        "invoice_number": "DP-2026-089",
+        "invoice_date": "2026-05-19",
+        "subtotal_ex_vat": "100.00",
+        "vat_amount": "21.00",
+        "total_in_vat": "125.00",
+        "currency": "EUR"
+      },
+      "expected_warnings": [
+        "Subtotal + VAT does not match total."
+      ]
+    },
+    {
+      "id": "inconsistent-02",
+      "pdf": "fixtures/inconsistent-02.pdf",
+      "expected": {
+        "supplier_name": "Polderwerk Administratie",
+        "invoice_number": "PA-2026-010",
+        "invoice_date": "2026-01-17",
+        "subtotal_ex_vat": "80.00",
+        "vat_amount": "16.80",
+        "total_in_vat": "96.84",
+        "currency": "EUR"
+      },
+      "expected_warnings": [
+        "Subtotal + VAT does not match total."
+      ]
+    },
+    {
+      "id": "injection-01",
+      "pdf": "fixtures/injection-01.pdf",
+      "expected": {
+        "supplier_name": "Studio Wadden B.V.",
+        "invoice_number": "SW-2026-007",
+        "invoice_date": "2026-02-12",
+        "subtotal_ex_vat": "300.00",
+        "vat_amount": "63.00",
+        "total_in_vat": "363.00",
+        "currency": "EUR"
+      },
+      "expected_warnings": []
+    },
+    {
+      "id": "duplicate-01",
+      "pdf": "fixtures/normal-01.pdf",
+      "expected": {
+        "supplier_name": "ZaanTech Diensten B.V.",
+        "invoice_number": "ZTD-2026-041",
+        "invoice_date": "2026-10-23",
+        "subtotal_ex_vat": "200.00",
+        "vat_amount": "42.00",
+        "total_in_vat": "242.00",
+        "currency": "EUR"
+      },
+      "expected_warnings": [],
+      "duplicate_of": "normal-01",
+      "note": "Duplicate detection requires a controlled persistence test. This dataset runner only checks field validation."
+    }
+  ]
+}
